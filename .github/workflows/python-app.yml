@@ -46,7 +46,7 @@ jobs:
     - name: Copy files to server
       run: |
         rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" --delete \
-          ./ yangjianchao@${{ secrets.SERVER_HOST }}:/tmp/server-stats/
+          ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/
 
     - name: Execute script on server
       run: |
@@ -56,8 +56,8 @@ jobs:
     - name: Retrieve updated file
       run: |
         scp -P ${{ secrets.SSH_PORT || '22' }} \
-          ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/scripts/ssh_login_minutes.csv \
-          ./scripts/
+          ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/ssh_login_minutes.csv \
+          ./
 
     # - name: Commit and push changes
     #   run: |
