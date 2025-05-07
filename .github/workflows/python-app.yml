@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '0 21 * * *'  # 9 PM UTC (5 AM China time UTC+8)
+    - cron: '0 16 * * *'  # 4 PM UTC (0 AM China time UTC+8)
 
 permissions:
   contents: write  # Needed to commit changes back to the repo
@@ -51,12 +51,16 @@ jobs:
     - name: Execute script on server
       run: |
         ssh -p ${{ secrets.SSH_PORT || '22' }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} \
-          "cd /tmp/server-stats/scripts && python3 count-user-login-minutes-every-day.py"
+          "cd /tmp/server-stats/scripts && python3 count-user-login-minutes-every-day.py && \
+           python3 transfer-csv-to-readme.py"
 
     - name: Retrieve updated file
       run: |
         scp -P ${{ secrets.SSH_PORT || '22' }} \
           ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/ssh_login_minutes.csv \
+          ./
+        scp -P ${{ secrets.SSH_PORT || '22' }} \
+          ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/README.md \
           ./
         ssh -p ${{ secrets.SSH_PORT || '22' }} \
           ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} \
@@ -66,5 +70,6 @@ jobs:
       run: |
         git config --global user.name "StatsUpdaterBot"
         git config --global user.email "41898282+stats-updater[bot]@users.noreply.github.com"
-        git add ./ssh_login_minutes.csv
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update login minutes data [automated]" && git push)
+        git add ./ssh_login_minutes.csv ./README.md
+        git diff --quiet && git diff --staged --quiet || \
+          (git commit -m "Update login minutes data [automated]" && git push)

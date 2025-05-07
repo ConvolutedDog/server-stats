@@ -1,4 +1,6 @@
 # server-stats
 
-## 其他方案
- - `ac`（accounting）可用于统计用户的登录时长（需启用 utmp/wtmp 日志），但是不区分 tty 和 sshd。
+## Daily login time in minutes
+
+## Other methods
+- `ac` (accounting) can be used to count the login time of a user (with UTMP/WTMP logs enabled), but it does not distinguish between TTY and SSHD.
