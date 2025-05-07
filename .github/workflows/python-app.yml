@@ -1,0 +1,67 @@
+name: Daily Server Stats Update
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 21 * * *'  # 9 PM UTC (5 AM China time UTC+8)
+
+permissions:
+  contents: write  # Needed to commit changes back to the repo
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Needed for git operations later
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Add SSH key and configure known hosts
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        echo "Host server-stats-host
+          HostName ${{ secrets.SERVER_HOST }}
+          User ${{ secrets.SSH_USERNAME }}
+          Port ${{ secrets.SSH_PORT || '22' }}
+          IdentityFile ~/.ssh/id_rsa" > ~/.ssh/config
+        ssh-keyscan -p ${{ secrets.SSH_PORT || '22' }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Copy files to server
+      run: |
+        rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" --delete \
+          ./ yangjianchao@${{ secrets.SERVER_HOST }}:/tmp/server-stats/
+
+    - name: Execute script on server
+      run: |
+        ssh -p ${{ secrets.SSH_PORT || '22' }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} \
+          "cd /tmp/server-stats/scripts && python3 count-user-login-minutes-every-day.py"
+
+    - name: Retrieve updated file
+      run: |
+        scp -P ${{ secrets.SSH_PORT || '22' }} \
+          ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/scripts/ssh_login_minutes.csv \
+          ./scripts/
+
+    # - name: Commit and push changes
+    #   run: |
+    #     git config --global user.name "GitHub Actions"
+    #     git config --global user.email "actions@github.com"
+    #     git add ./scripts/ssh_login_minutes.csv
+    #     git diff --quiet && git diff --staged --quiet || (git commit -m "Update login minutes data [automated]" && git push)
