@@ -12,7 +12,7 @@ from pathlib import Path
 from datetime import datetime
 
 def csv_to_markdown(csv_path, num_rows=100):
-    """Convert CSV to Markdown table with newest dates first"""
+    """Convert CSV to Markdown table with newest dates first and proper column widths"""
     with open(csv_path, 'r') as f:
         reader = csv.reader(f)
         headers = next(reader)
@@ -20,29 +20,51 @@ def csv_to_markdown(csv_path, num_rows=100):
     
     # Sort by date (newest first)
     try:
-        # Try to parse dates in multiple common formats
         def parse_date(date_str):
             for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'):
                 try:
                     return datetime.strptime(date_str, fmt)
                 except ValueError:
                     continue
-            return datetime.min  # If all formats fail
+            return datetime.min
         
         data.sort(key=lambda x: parse_date(x[0]), reverse=True)
     except Exception as e:
         print(f"Warning: Could not sort by date - {str(e)}")
-        data = data[-num_rows:]  # Fallback: take last 100 rows
+        data = data[-num_rows:]
     
     # Get only the most recent rows
     recent_data = data[:num_rows]
     
-    # Create markdown table with centered alignment
-    table = "| " + " | ".join(headers) + " |\n"
-    table += "|" + "|".join([":---:"] * len(headers)) + "|\n"
+    # Calculate max width for each column
+    col_widths = [len(header) for header in headers]
     for row in recent_data:
-        table += "| " + " | ".join(row) + " |\n"
+        for i, cell in enumerate(row):
+            col_widths[i] = max(col_widths[i], len(str(cell)))
     
+    # Create markdown table with proper spacing
+    table = ""
+
+    # Header row
+    header_row = "|"
+    for i, header in enumerate(headers):
+        header_row += f" {header.center(col_widths[i])} |"
+    table += header_row + "\n"
+    
+    # Separator row
+    separator_row = "|"
+    for width in col_widths:
+        separator_row += f":{'-'*(width)}:" if width > 2 else ":-:"
+        separator_row += "|"
+    table += separator_row + "\n"
+    
+    # Data rows
+    for row in recent_data:
+        data_row = "|"
+        for i, cell in enumerate(row):
+            data_row += f" {str(cell).center(col_widths[i])} |"
+        table += data_row + "\n"
+
     return table.strip()
 
 def update_readme(readme_path, new_content):

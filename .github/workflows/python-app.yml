@@ -72,4 +72,4 @@ jobs:
         git config --global user.email "41898282+stats-updater[bot]@users.noreply.github.com"
         git add ./ssh_login_minutes.csv ./README.md
         git diff --quiet && git diff --staged --quiet || \
-          (git commit -m "Update login minutes data [automated]" && git push)
+          (git commit -m "[Bot] Update login minutes data" && git push)
