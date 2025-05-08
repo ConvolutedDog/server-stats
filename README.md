@@ -1,6 +1,9 @@
 # server-stats
 
 ## Monthly login time in days
+|  month  | xuezeyu | yangjianchao | pengyinlun | yangrenyu | pengbenkang | shenjunzhong | chendong |
+|:-------:|:-------:|:------------:|:----------:|:---------:|:-----------:|:------------:|:--------:|
+| 2025-05 |    1    |      1       |     1      |     1     |      1      |      1       |    1     |
 
 ## Daily login time in minutes
 |    date    | xuezeyu | yangjianchao | pengyinlun | yangrenyu | pengbenkang | shenjunzhong | chendong |
