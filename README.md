@@ -15,7 +15,7 @@ generating daily and monthly reports. The workflow runs daily at 00:00 (UTC+8) t
 ## Monthly login time in days
 |  month  | pengbenkang | yangjianchao | pengyinlun | juxin | hello | shenjunzhong | fengjing | wangjianan | chendong | hejun | yangrenyu | xuezeyu | kangyuhan | lzd |
 |:-------:|:-----------:|:------------:|:----------:|:-----:|:-----:|:------------:|:--------:|:----------:|:--------:|:-----:|:---------:|:-------:|:---------:|:---:|
-|  TOTAL  |     19d     |     21d      |    10d     |  14d  |   9d  |     12d      |    3d    |     3d     |    6d    |   2d  |    14d    |   11d   |     4d    |  1d |
+|  Total  |     19d     |     21d      |    10d     |  14d  |   9d  |     12d      |    3d    |     3d     |    6d    |   2d  |    14d    |   11d   |     4d    |  1d |
 | 2025-05 |      1      |      2       |     1      |   0   |   0   |      1       |    0     |     0      |    1     |   0   |     1     |    1    |     0     |  0  |
 | 2025-04 |      18     |      19      |     9      |   14  |   9   |      11      |    3     |     3      |    5     |   2   |     13    |    10   |     4     |  1  |
 
