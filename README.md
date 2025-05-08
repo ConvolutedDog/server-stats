@@ -9,10 +9,6 @@
 |:-------:|:-------:|:------------:|:----------:|:---------:|:-----------:|:------------:|:--------:|
 | 2025-05 |    1    |      1       |     1      |     1     |      1      |      1       |    1     |
 
-<!-- 
-  NOTE: If you need to modify the section name of this table, 
-  you must also update the corresponding Python file to maintain consistency.
--->
 ## Daily login time in minutes
 |    date    | xuezeyu | yangjianchao | pengyinlun | yangrenyu | pengbenkang | shenjunzhong | chendong |
 |:----------:|:-------:|:------------:|:----------:|:---------:|:-----------:|:------------:|:--------:|
