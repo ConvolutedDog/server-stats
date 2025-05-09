@@ -71,6 +71,12 @@ generating daily and monthly reports. The workflow runs daily at 00:00 (UTC+8) t
       ```bash
       rm -rf /tmp/server-stats
       ```
+3. Clear the data in `ssh_login_minutes.csv`, otherwise it will cause your data to contain existing data from this repository:
+   ```bash
+   echo "" > ssh_login_minutes.csv
+   ```
+4. The workflow will start automatically at 00:00 (UTC+8) either you can start it using `git push` or manually.
+   The workflow that starts automatically will not conflict with data from other startup methods.
 
 ## Other methods
 - `ac` (accounting) can be used to count the login time of a user (with UTMP/WTMP logs enabled), but it does not distinguish between TTY and SSHD.
