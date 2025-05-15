@@ -7,7 +7,13 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '0 16 * * *'  # 4 PM UTC (0 AM China time UTC+8)
+    # Intended trigger time: 00:00 Beijing Time (UTC+8).
+    # GitHub Actions typically has ~27 minutes startup delay during our test.
+    # Time calculation:
+    #   - Target UTC time: 16:00 (00:00 Beijing - 8 hours).
+    #   - With compensation: 15:30 UTC (16:00 - 30 min buffer).
+    # Note: cron syntax uses UTC time.
+    - cron: '0 15 30 * *'
 
 permissions:
   contents: write  # Needed to commit changes back to the repo
