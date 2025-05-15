@@ -13,7 +13,7 @@ on:
     #   - Target UTC time: 16:00 (00:00 Beijing - 8 hours).
     #   - With compensation: 15:30 UTC (16:00 - 30 min buffer).
     # Note: cron syntax uses UTC time.
-    - cron: '0 15 30 * *'
+    - cron: '30 15 * * *'
 
 permissions:
   contents: write  # Needed to commit changes back to the repo
