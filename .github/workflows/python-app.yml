@@ -59,10 +59,10 @@ jobs:
 
     - name: Retrieve updated file
       run: |
-        scp -P ${{ secrets.SSH_PORT || '22' }} \
+        rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" \
           ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/ssh_login_minutes.csv \
           ./
-        scp -P ${{ secrets.SSH_PORT || '22' }} \
+        rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" \
           ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/README.md \
           ./
         ssh -p ${{ secrets.SSH_PORT || '22' }} \
