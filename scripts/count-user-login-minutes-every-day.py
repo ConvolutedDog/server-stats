@@ -186,7 +186,8 @@ def get_existing_usernames(csv_file):
 
 def write_to_csv(daily_usage, target_date):
     """Write login data to CSV file with dynamic header management"""
-    csv_file = "../ssh_login_minutes.csv"
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_file = os.path.join(this_dir, "..", "ssh_login_minutes.csv")
 
     # Get existing and current usernames
     existing_usernames = get_existing_usernames(csv_file)
@@ -203,9 +204,11 @@ def write_to_csv(daily_usage, target_date):
         if username in daily_usage:
             minutes = daily_usage[username]
             row_data[username] = round(
-                minutes.total_seconds() / 60
-                if isinstance(minutes, timedelta)
-                else float(minutes),
+                (
+                    minutes.total_seconds() / 60
+                    if isinstance(minutes, timedelta)
+                    else float(minutes)
+                ),
                 2,
             )
         else:

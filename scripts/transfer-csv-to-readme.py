@@ -6,10 +6,10 @@ CSV to README Reansfer
 - Write to README.md
 """
 
+import os
 import csv
 import re
 from collections import defaultdict
-from pathlib import Path
 from datetime import datetime
 
 
@@ -205,12 +205,17 @@ def update_readme_monthly(readme_path, new_content):
 
 
 def main():
-    base_dir = Path(__file__).parent.parent
-    csv_path = base_dir / "ssh_login_minutes.csv"
-    readme_path = base_dir / "README.md"
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.join(this_dir, "..")
 
-    if not csv_path.exists():
+    csv_path = os.path.join(base_dir, "ssh_login_minutes.csv")
+    readme_path = os.path.join(base_dir, "README.md")
+
+    if not os.path.exists(csv_path):
         print(f"Error: {csv_path} not found")
+        return
+    if not os.path.exists(readme_path):
+        print(f"Error: {readme_path} not found")
         return
 
     try:
