@@ -262,6 +262,85 @@ def write_to_csv(daily_usage, target_date):
         raise e
 
 
+def sort_csv_by_date():
+    """Sort CSV file by date column (first column)"""
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_file = os.path.join(this_dir, "..", "ssh_login_minutes.csv")
+
+    # Read CSV file
+    with open(csv_file, "r", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        rows = list(reader)
+
+    # Extract header and data rows
+    header = rows[0]
+    data_rows = rows[1:]
+
+    # Sort data by first column (date) using datetime for proper sorting
+    # Handle potential parsing errors with try-except
+    def get_date_key(row):
+        try:
+            return datetime.strptime(row[0], "%Y-%m-%d")
+        except ValueError:
+            # If date format is invalid, return a distant future date
+            return datetime(9999, 12, 31)
+
+    sorted_data = sorted(data_rows, key=get_date_key)
+
+    # Write to output file if specified
+    with open(csv_file, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(sorted_data)
+
+
+def parse_existing_csv():
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.join(this_dir, "..")
+
+    csv_path = os.path.join(base_dir, "ssh_login_minutes.csv")
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"{csv_path} not found")
+
+    # Read all dates from the CSV file
+    dates = []
+    with open(csv_path, "r", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if row[0] == "date":
+                continue
+            dates.append(row[0])
+
+    # Transfer string to datetime objects
+    date_objects = [datetime.strptime(date, "%Y-%m-%d") for date in dates]
+
+    # Find the min and yesterday dates
+    start_date = min(date_objects)
+    end_date = datetime.strptime(
+        (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"), "%Y-%m-%d"
+    )
+
+    # Full region of dates from start_date to yesterday
+    all_dates = []
+    current_date = start_date
+    while current_date <= end_date:
+        all_dates.append(current_date)
+        current_date += timedelta(days=1)
+
+    # Find missing dates
+    missing_dates = []
+    for date in all_dates:
+        if date not in date_objects:
+            missing_dates.append(date.strftime("%Y-%m-%d"))
+
+    # Output missing dates
+    print("\nMissing dates:")
+    for i, date in enumerate(missing_dates, 1):
+        print(f"{i}. {str(date)}")
+
+    return missing_dates
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Calculate daily SSH login duration per user",
@@ -272,22 +351,46 @@ def main():
         help="Target date (YYYY-MM-DD), defaults to yesterday",
         default=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
     )
+    parser.add_argument(
+        "--no-add-missing-dates",
+        help="Do not add missing dates in the CSV file",
+        action="store_true",
+        default=False,
+    )
 
     args = parser.parse_args()
+    add_missing_dates = not args.no_add_missing_dates
 
     try:
         # Parse logs (with optional debug timestamp override)
         sessions = parse_secure_logs()
 
-        # Calculate usage for target date
-        target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
-        daily_usage = calculate_daily_usage(sessions, target_date)
+        # Calculate usage for target date or missing dates
+        if not add_missing_dates:
+            target_date = datetime.strptime(args.date, "%Y-%m-%d").date()
+            daily_usage = calculate_daily_usage(sessions, target_date)
 
-        # Generate report
-        generate_report(daily_usage, target_date)
+            # Generate report
+            generate_report(daily_usage, target_date)
 
-        # Write to CSV
-        write_to_csv(daily_usage, target_date)
+            # Write to CSV
+            write_to_csv(daily_usage, target_date)
+            sort_csv_by_date()
+        else:
+            # Parse existing CSV to find missing dates
+            missing_dates = parse_existing_csv()
+
+            # Calculate and add each missing date
+            for missing_date in missing_dates:
+                target_date = datetime.strptime(missing_date, "%Y-%m-%d").date()
+                daily_usage = calculate_daily_usage(sessions, target_date)
+
+                # Generate report
+                generate_report(daily_usage, target_date)
+
+                # Write to CSV
+                write_to_csv(daily_usage, target_date)
+                sort_csv_by_date()
     except Exception as e:
         sys.stderr.write(f"[ERROR] {str(e)}\n")
         sys.exit(1)

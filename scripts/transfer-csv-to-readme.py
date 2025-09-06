@@ -24,7 +24,6 @@ def csv_to_markdown_monthly(csv_path):
         user_totals = defaultdict(int)
 
         for row in reader:
-
             date_str = row[0]
             date = datetime.strptime(date_str, "%Y-%m-%d")
             month_key = f"{date.year}-{date.month:02d}"
