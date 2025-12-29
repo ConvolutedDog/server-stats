@@ -49,6 +49,8 @@ class DashboardGenerator:
             total_sums = df[users].sum().sort_values(ascending=False)
             pie_total_labels = total_sums.index.tolist()
             pie_total_data = total_sums.values.tolist()
+            total_hours = total_sums.sum()
+            pie_total_percent = [(v/total_hours*100) for v in pie_total_data]
 
             # B. Monthly distribution (split by month)
             # Structure: {"2025-04": {"labels": [u1, u2], "data": [100, 20]}, ...}
@@ -60,10 +62,12 @@ class DashboardGenerator:
                 # Filter out users with zero data for this month to avoid too many zero values in pie chart
                 row_data = row[users]
                 valid_data = row_data[row_data > 0].sort_values(ascending=False)
+                month_total = valid_data.sum()
 
                 monthly_pie_data[month] = {
                     "labels": valid_data.index.tolist(),
                     "data": valid_data.values.tolist(),
+                    "percent": [(v/month_total*100) for v in valid_data.values],
                 }
 
             # --- 3. Generate Color Configuration ---
@@ -186,7 +190,7 @@ class DashboardGenerator:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSH 审计看板 Pro</title>
+    <title>SSH 看板</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1108,7 +1112,23 @@ class DashboardGenerator:
                 hoverOffset: 10
             }}]
         }},
-        options: getCommonOptions(true)
+        options: {{
+        ...getCommonOptions(true),
+        plugins: {{
+            ...getCommonOptions(true).plugins,
+            tooltip: {{
+                callbacks: {{
+                    label: function(context) {{
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100 * 10) / 10;
+                        return `${{label}}: ${{value.toFixed(1)}}h (${{percentage}}%)`;
+                    }}
+                }}
+            }}
+        }}
+    }}
     }});
 
     // --- 初始化饼图 (月度 - 动态) ---
@@ -1144,7 +1164,23 @@ class DashboardGenerator:
             monthlyPieChart = new Chart(ctx, {{
                 type: 'doughnut',
                 data: chartData,
-                options: getCommonOptions(true)
+                options: {{
+                    ...getCommonOptions(true),
+                    plugins: {{
+                        ...getCommonOptions(true).plugins,
+                        tooltip: {{
+                            callbacks: {{
+                                label: function(context) {{
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100 * 10) / 10;
+                                    return `${{label}}: ${{value.toFixed(1)}}h (${{percentage}}%)`;
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
             }});
         }}
     }}
