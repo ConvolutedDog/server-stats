@@ -67,6 +67,8 @@ generating daily and monthly reports. The workflow runs daily at 00:00 (UTC+8) t
   - `SSH_USERNAME`: Username for SSH authentication on the target server.
   - `SERVER_HOST`: Hostname or IP address of the target server.
   - `SSH_PORT` (Optional): Port number for SSH connection (default: 22).
+  - `GIT_PUSH_USER_NAME`: Username for GitHub account used for pushing changes to the repository.
+  - `GIT_PUSH_USER_EMAIL`: Email address for GitHub account used for pushing changes to the repository.
 2. Sudo Requirements
   - The specified SSH user must have the following sudo capabilities (the workflow will copy this repo into the `/tmp/server-stats` directory):
     - Ability to execute the required Python scripts without password prompt (sudo privileges)
