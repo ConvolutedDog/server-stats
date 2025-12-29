@@ -67,10 +67,10 @@ def parse_secure_logs():
     for log_file in get_secure_logs():
         try:
             result = subprocess.Popen(
-                ["sudo", "cat", f"/var/log/{log_file}"],
+                ["sudo", "cat", "/var/log/" + log_file],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
+                universal_newlines=True,
                 encoding="utf-8",
                 errors="replace",
             )
