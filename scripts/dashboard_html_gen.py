@@ -30,6 +30,87 @@ class DashboardGenerator:
             except Exception as e:
                 print(f"Failed to load user mapping: {e}")
 
+        self.locales = {
+            "zh": {
+                "title": "SSH 看板",
+                "title_subtext": "用户登录行为分析与可视化",
+                "data_range": "数据范围",
+                "last_update": "最后更新",
+                "total_hours": "所有用户累计登录时长",
+                "user_count": "用户总数",
+                "total_distribution": "累计时长占比（所有月份）",
+                "monthly_distribution": "月度时长占比",
+                "monthly_trend": "月度登录统计趋势（小时/月）",
+                "daily_trend": "每日登录详情（小时/日）",
+                "from_label": "从",
+                "to_label": "到",
+                "apply": "应用",
+                "select_all": "全选",
+                "unselect_all": "全不选",
+                "line_chart": "折线图",
+                "bar_chart": "柱状图",
+                "stacked": "堆叠",
+                "reset_zoom": "重置缩放",
+                "view_source": "查看源码",
+                "ssh_dashboard": "SSH 登录看板",
+                "data_updated": "数据更新于",
+                "hours": "小时",
+                "users": "用户",
+                "month": "月份",
+                "day": "日期",
+                "recent_6_months": "最近6个月",
+                "recent_30_days": "最近30天",
+                "last_month": "最后一个月",
+                "all": "全部",
+                "ranking": "排名",
+                "user": "用户",
+                "login_hours": "登录时长",
+                "no_data": "暂无数据",
+                "language": "语言",
+                "english": "English",
+                "chinese": "中文",
+            },
+            "en": {
+                "title": "SSH Dashboard",
+                "title_subtext": "User Login Behavior Analysis & Visualization",
+                "data_range": "Data Range",
+                "last_update": "Last Update",
+                "total_hours": "Total Login Hours (All Users)",
+                "user_count": "Total Users",
+                "total_distribution": "Total Distribution (All Months)",
+                "monthly_distribution": "Monthly Distribution",
+                "monthly_trend": "Monthly Login Trend (Hours/Month)",
+                "daily_trend": "Daily Login Details (Hours/Day)",
+                "from_label": "From",
+                "to_label": "To",
+                "apply": "Apply",
+                "select_all": "Select All",
+                "unselect_all": "Unselect All",
+                "line_chart": "Line",
+                "bar_chart": "Bar",
+                "stacked": "Stacked",
+                "reset_zoom": "Reset Zoom",
+                "view_source": "View Source",
+                "ssh_dashboard": "SSH Login Dashboard",
+                "data_updated": "Data updated at",
+                "hours": "h",
+                "users": "users",
+                "month": "Month",
+                "day": "Day",
+                "recent_6_months": "Recent 6 months",
+                "recent_30_days": "Recent 30 days",
+                "last_month": "Last month",
+                "all": "All",
+                "ranking": "Ranking",
+                "user": "User",
+                "login_hours": "Login Hours",
+                "no_data": "No data",
+                "language": "Language",
+                "english": "English",
+                "chinese": "中文",
+            },
+        }
+
     def process_data(self):
         """Process CSV data and prepare for visualization"""
         try:
@@ -195,25 +276,28 @@ class DashboardGenerator:
     def generate_html(self, data):
         """Generate HTML dashboard with processed data"""
 
-        # Get current time
+        # 获取当前时间
         generation_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Generate month selector options
+        # 生成月份选择器选项
         months_options = ""
         for month in data["months_list"]:
             months_options += f'<option value="{month}">{month}</option>'
 
-        # Generate day selector options (for daily chart)
+        # 生成日期选择器选项
         daily_options = ""
         for day in data["daily_labels"]:
             daily_options += f'<option value="{day}">{day}</option>'
+
+        # 生成JSON格式的语言包
+        locales_json = json.dumps(self.locales)
 
         html_content = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSH 看板</title>
+    <title>SSH Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -268,11 +352,44 @@ class DashboardGenerator:
             margin: 0 auto; 
         }}
 
+        /* 语言切换按钮 */
+        .language-switcher {{
+            position: fixed;
+            top: 30px;
+            left: 320px;
+            z-index: 1000;
+        }}
+
+        .language-toggle {{
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-main);
+            box-shadow: 0 2px 10px var(--shadow);
+            transition: all 0.3s ease;
+            gap: 8px;
+        }}
+
+        .language-toggle:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px var(--shadow);
+        }}
+
+        .language-toggle .language-icon {{
+            font-size: 16px;
+        }}
+
         /* 主题切换按钮 */
         .theme-switcher {{
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 30px;
+            left: 400px;
             z-index: 1000;
         }}
 
@@ -280,8 +397,8 @@ class DashboardGenerator:
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 33px;
+            height: 33px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -684,6 +801,15 @@ class DashboardGenerator:
                 display: flex;
                 justify-content: flex-end;
             }}
+            
+            .language-switcher {{
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: flex-end;
+            }}
         }}
 
         @media (max-width: 480px) {{
@@ -701,6 +827,11 @@ class DashboardGenerator:
                 width: 45px;
                 height: 45px;
                 font-size: 18px;
+            }}
+            
+            .language-toggle {{
+                padding: 6px 12px;
+                font-size: 13px;
             }}
         }}
 
@@ -783,6 +914,14 @@ class DashboardGenerator:
 </head>
 <body>
 
+<!-- 语言切换按钮 -->
+<div class="language-switcher">
+    <div class="language-toggle" onclick="toggleLanguage()">
+        <i class="fas fa-globe language-icon"></i>
+        <span class="language-text" data-key="language">EN</span>
+    </div>
+</div>
+
 <!-- 主题切换按钮 -->
 <div class="theme-switcher">
     <div class="theme-toggle" onclick="toggleTheme()">
@@ -796,24 +935,24 @@ class DashboardGenerator:
     <div class="header-section">
         <div class="header-main">
             <div class="title-container">
-                <h1 class="main-title">
+                <h1 class="main-title" data-key="title">
                     <i class="fas fa-shield-alt title-icon"></i>
                     SSH 看板
                 </h1>
-                <div class="title-subtext">用户登录行为分析与可视化</div>
+                <div class="title-subtext" data-key="title_subtext">用户登录行为分析与可视化</div>
             </div>
             <div class="header-info">
                 <div class="info-card">
                     <i class="fas fa-calendar-alt info-icon"></i>
                     <div class="info-content">
-                        <div class="info-label">数据范围</div>
+                        <div class="info-label" data-key="data_range">数据范围</div>
                         <div class="info-value">{data['date_range']['first_date']} - {data['date_range']['last_date']}</div>
                     </div>
                 </div>
                 <div class="info-card">
                     <i class="fas fa-sync-alt info-icon"></i>
                     <div class="info-content">
-                        <div class="info-label">最后更新</div>
+                        <div class="info-label" data-key="last_update">最后更新</div>
                         <div class="info-value">{data['stats']['last_update']}</div>
                     </div>
                 </div>
@@ -828,15 +967,15 @@ class DashboardGenerator:
         <div class="stat-card">
             <div class="stat-icon"><i class="fas fa-clock"></i></div>
             <div>
-                <div style="color:var(--text-muted); font-size:12px">所有用户累计登录时长</div>
-                <div style="font-weight:bold; font-size:20px">{data['stats']['total_hours']} h</div>
+                <div class="stat-label" data-key="total_hours">所有用户累计登录时长</div>
+                <div style="font-weight:bold; font-size:20px">{data['stats']['total_hours']} <span data-key="hours">小时</span></div>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon"><i class="fas fa-users"></i></div>
             <div>
-                <div style="color:var(--text-muted); font-size:12px">用户总数</div>
-                <div style="font-weight:bold; font-size:20px">{data['stats']['user_count']}</div>
+                <div class="stat-label" data-key="user_count">用户总数</div>
+                <div style="font-weight:bold; font-size:20px">{data['stats']['user_count']} <span data-key="users">用户</span></div>
             </div>
         </div>
     </div>
@@ -844,7 +983,7 @@ class DashboardGenerator:
     <div class="pie-grid">
         <div class="chart-container" style="margin-bottom: 0;">
             <div class="chart-header">
-                <h2><i class="fas fa-chart-pie"></i> 累计时长占比（所有月份）</h2>
+                <h2 data-key="total_distribution"><i class="fas fa-chart-pie"></i> 累计时长占比（所有月份）</h2>
             </div>
             <div class="pie-canvas-wrapper">
                 <canvas id="totalPieChart"></canvas>
@@ -853,7 +992,7 @@ class DashboardGenerator:
 
         <div class="chart-container" style="margin-bottom: 0;">
             <div class="chart-header">
-                <h2><i class="fas fa-calendar-alt"></i> 月度时长占比</h2>
+                <h2 data-key="monthly_distribution"><i class="fas fa-calendar-alt"></i> 月度时长占比</h2>
                 <div class="chart-controls">
                     <select id="monthSelector" class="custom-select" onchange="updateMonthlyPie()">
                         {months_options}
@@ -868,18 +1007,18 @@ class DashboardGenerator:
 
     <div class="chart-container">
         <div class="chart-header">
-            <h2><i class="fas fa-chart-line"></i> 月度登录统计趋势（小时/月）</h2>
+            <h2 data-key="monthly_trend"><i class="fas fa-chart-line"></i> 月度登录统计趋势（小时/月）</h2>
             <div style="display: flex; gap: 10px;">
                 <div class="month-selector-group">
-                    <span class="month-label">从:</span>
+                    <span class="month-label" data-key="from_label">从:</span>
                     <select id="monthlyStartMonth" style="min-width: 80px;">
                         {months_options}
                     </select>
-                    <span class="month-label">到:</span>
+                    <span class="month-label" data-key="to_label">到:</span>
                     <select id="monthlyEndMonth" style="min-width: 80px;">
                         {months_options}
                     </select>
-                    <button class="apply-btn" onclick="applyMonthRange('monthly')">应用</button>
+                    <button class="apply-btn" onclick="applyMonthRange('monthly')" data-key="apply">应用</button>
                 </div>
                 <div class="chart-controls">
                     <button onclick="toggleAll('monthlyChart', true)" class="btn-check" title="全选">
@@ -913,18 +1052,18 @@ class DashboardGenerator:
 
     <div class="chart-container">
         <div class="chart-header">
-            <h2><i class="fas fa-calendar-day"></i> 每日登录详情（小时/日）</h2>
+            <h2 data-key="daily_trend"><i class="fas fa-calendar-day"></i> 每日登录详情（小时/日）</h2>
             <div style="display: flex; gap: 10px;">
                 <div class="month-selector-group">
-                    <span class="month-label">从:</span>
+                    <span class="month-label" data-key="from_label">从:</span>
                     <select id="dailyStartDate" style="min-width: 100px;">
                         {daily_options}
                     </select>
-                    <span class="month-label">到:</span>
+                    <span class="month-label" data-key="to_label">到:</span>
                     <select id="dailyEndDate" style="min-width: 100px;">
                         {daily_options}
                     </select>
-                    <button class="apply-btn" onclick="applyDateRange()">应用</button>
+                    <button class="apply-btn" onclick="applyDateRange()" data-key="apply">应用</button>
                 </div>
                 <div class="chart-controls">
                     <button onclick="toggleAll('dailyChart', true)" class="btn-check">
@@ -962,17 +1101,21 @@ class DashboardGenerator:
            target="_blank" 
            class="github-footer-link">
             <i class="fab fa-github"></i>
-            <span>查看源码</span>
+            <span data-key="view_source">查看源码</span>
         </a>
         <div class="footer-info">
-            <span class="footer-text">SSH Login Dashboard</span>
+            <span class="footer-text" data-key="ssh_dashboard">SSH 登录看板</span>
             <span class="footer-separator">|</span>
-            <span class="footer-text">数据更新于: {generation_time}</span>
+            <span class="footer-text">{generation_time}</span>
         </div>
     </div>
 </div>
 
 <script>
+    // --- 语言包 ---
+    const locales = {locales_json};
+    let currentLang = localStorage.getItem('dashboard-language') || 'zh';
+    
     // --- 主题切换功能 ---
     function toggleTheme() {{
         const body = document.body;
@@ -988,6 +1131,93 @@ class DashboardGenerator:
 
         // 更新图表主题
         updateChartThemes(!isDark);
+    }}
+
+    // --- 语言切换功能 ---
+    function toggleLanguage() {{
+        currentLang = currentLang === 'zh' ? 'en' : 'zh';
+        localStorage.setItem('dashboard-language', currentLang);
+        updateLanguage();
+    }}
+
+    function updateLanguage() {{
+        // 更新页面文本
+        document.querySelectorAll('[data-key]').forEach(element => {{
+            const key = element.getAttribute('data-key');
+            if (locales[currentLang][key]) {{
+                if (element.tagName === 'INPUT' || element.tagName === 'SELECT') {{
+                    // 保持输入框的占位符文本
+                    element.setAttribute('placeholder', locales[currentLang][key]);
+                }} else if (element.tagName === 'BUTTON') {{
+                    // 对于按钮，更新文本内容
+                    const textNode = Array.from(element.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+                    if (textNode) {{
+                        textNode.textContent = locales[currentLang][key];
+                    }}
+                }} else {{
+                    element.textContent = locales[currentLang][key];
+                }}
+            }}
+        }});
+
+        // 更新按钮标题
+        document.querySelectorAll('.btn-check').forEach(btn => {{
+            btn.title = currentLang === 'zh' ? '全选' : 'Select All';
+        }});
+        document.querySelectorAll('.btn-trash').forEach(btn => {{
+            btn.title = currentLang === 'zh' ? '全不选' : 'Unselect All';
+        }});
+        document.querySelectorAll('.btn-reset').forEach(btn => {{
+            btn.title = currentLang === 'zh' ? '重置缩放' : 'Reset Zoom';
+        }});
+
+        // 更新下拉框选项的提示文本
+        const monthSelectors = ['monthlyStartMonth', 'monthlyEndMonth', 'monthSelector'];
+        monthSelectors.forEach(id => {{
+            const select = document.getElementById(id);
+            if (select) {{
+                Array.from(select.options).forEach(option => {{
+                    if (option.text.includes('最近')) {{
+                        option.text = option.text.replace('最近', currentLang === 'zh' ? '最近' : 'Recent');
+                    }} else if (option.text.includes('最后')) {{
+                        option.text = option.text.replace('最后', currentLang === 'zh' ? '最后' : 'Last');
+                    }} else if (option.text.includes('全部')) {{
+                        option.text = option.text.replace('全部', currentLang === 'zh' ? '全部' : 'All');
+                    }}
+                }});
+            }}
+        }});
+
+        // 更新日期选择器选项
+        const dateSelectors = ['dailyStartDate', 'dailyEndDate'];
+        dateSelectors.forEach(id => {{
+            const select = document.getElementById(id);
+            if (select) {{
+                Array.from(select.options).forEach(option => {{
+                    if (option.text.includes('最近')) {{
+                        option.text = option.text.replace('最近', currentLang === 'zh' ? '最近' : 'Recent');
+                    }} else if (option.text.includes('最后')) {{
+                        option.text = option.text.replace('最后', currentLang === 'zh' ? '最后' : 'Last');
+                    }}
+                }});
+            }}
+        }});
+
+        // 更新语言切换按钮文本
+        document.querySelector('.language-text').textContent = currentLang === 'zh' ? 'EN' : 'CN';
+
+        // 更新文档语言
+        document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+
+        // 更新页面标题
+        document.title = locales[currentLang]['title'];
+    }}
+
+    // 初始化语言
+    function initLanguage() {{
+        if (currentLang === 'en') {{
+            updateLanguage();
+        }}
     }}
 
     // 初始化主题
@@ -1033,8 +1263,11 @@ class DashboardGenerator:
         }}
     }}
 
-    // 页面加载时初始化主题
-    document.addEventListener('DOMContentLoaded', initTheme);
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', function() {{
+        initTheme();
+        initLanguage();
+    }});
 
     // --- 数据注入 ---
     const rawData = {json.dumps(data)};
