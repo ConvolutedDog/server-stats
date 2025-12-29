@@ -183,8 +183,7 @@ class DashboardGenerator:
         for year in years:
             years_options += f'<option value="{year}">{year}</option>'
 
-        html_content = f"""
-<!DOCTYPE html>
+        html_content = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -647,7 +646,7 @@ class DashboardGenerator:
 
     <div class="chart-container">
         <div class="chart-header">
-            <h2><i class="fas fa-chart-line"></i> 月度登录统计趋势</h2>
+            <h2><i class="fas fa-chart-line"></i> 月度登录统计趋势（小时/月）</h2>
             <div style="display: flex; gap: 10px;">
                 <div class="month-selector-group">
                     <span class="month-label">从:</span>
@@ -669,10 +668,10 @@ class DashboardGenerator:
                     </button>
                     <div style="width: 1px; background: var(--border); margin: 0 5px;"></div>
                     
-                    <button onclick="changeType('monthlyChart', 'line')" class="active" id="btn-monthlyChart-line">
+                    <button onclick="changeType('monthlyChart', 'line')" id="btn-monthlyChart-line">
                         <i class="fas fa-chart-line"></i>
                     </button>
-                    <button onclick="changeType('monthlyChart', 'bar')" id="btn-monthlyChart-bar">
+                    <button onclick="changeType('monthlyChart', 'bar')" class="active" id="btn-monthlyChart-bar">
                         <i class="fas fa-chart-bar"></i>
                     </button>
                     <button onclick="toggleStack('monthlyChart')" id="btn-monthlyChart-stack">
@@ -692,7 +691,7 @@ class DashboardGenerator:
     
     <div class="chart-container">
         <div class="chart-header">
-            <h2><i class="fas fa-calendar-day"></i> 每日登录详情</h2>
+            <h2><i class="fas fa-calendar-day"></i> 每日登录详情（小时/日）</h2>
             <div style="display: flex; gap: 10px;">
                 <div class="month-selector-group">
                     <span class="month-label">从:</span>
@@ -876,7 +875,7 @@ class DashboardGenerator:
     }}
 
     // --- 初始化趋势图 ---
-    function initTrendChart(id, dataType) {{
+    function initTrendChart(id, dataType, chartType) {{
         const ctx = document.getElementById(id).getContext('2d');
         
         // 获取初始月份范围
@@ -887,7 +886,7 @@ class DashboardGenerator:
         const filteredData = filterDataByMonthRange(dataType, startMonth, endMonth);
         
         charts[id] = new Chart(ctx, {{
-            type: 'line',
+            type: chartType,
             data: filteredData,
             options: getCommonOptions(false)
         }});
@@ -895,8 +894,8 @@ class DashboardGenerator:
 
     // 初始化图表
     initMonthSelectors();
-    initTrendChart('monthlyChart', 'monthly');
-    initTrendChart('dailyChart', 'daily');
+    initTrendChart('monthlyChart', 'monthly', 'bar');
+    initTrendChart('dailyChart', 'daily', 'line');
 
     // --- 初始化饼图 (总体) ---
     const totalPieCtx = document.getElementById('totalPieChart').getContext('2d');

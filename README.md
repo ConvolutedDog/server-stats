@@ -1,5 +1,13 @@
 # SSH Session Time Report (Daily/Monthly Automation)
 
+<div align="center">
+  <a href="https://convoluteddog.github.io/server-stats/" target="_blank">
+    <img src="https://github.com/ConvolutedDog/server-stats/dashboard/example.png" alt="SSH Dashboard" width="85%" style="border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #e1e4e8; cursor: pointer;">
+  </a>
+  <br>
+  <em>Click image to view interactive dashboard 🔗</em>
+</div>
+
 This repository automatically collects and processes user login time statistics from Linux servers,
 generating daily and monthly reports. The workflow runs daily at 00:00 (UTC+8) to:
 - Collect login time data from server logs
