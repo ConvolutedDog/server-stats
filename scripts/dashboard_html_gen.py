@@ -748,12 +748,12 @@ class DashboardGenerator:
     function initMonthSelectors() {{
         const months = rawData.months_list;
         if (months.length > 0) {{
-            // 设置月度图表：默认显示最近6个月
+            // 设置月度图表: 默认显示最近6个月
             const monthlyStartIdx = Math.max(0, months.length - 6);
             document.getElementById('monthlyStartMonth').value = months[monthlyStartIdx];
             document.getElementById('monthlyEndMonth').value = months[months.length - 1];
             
-            // 设置日度图表：默认显示最近1个月
+            // 设置日度图表: 默认显示最近1个月
             const dailyStartIdx = Math.max(0, months.length - 1);
             document.getElementById('dailyStartMonth').value = months[dailyStartIdx];
             document.getElementById('dailyEndMonth').value = months[months.length - 1];
@@ -990,7 +990,7 @@ class DashboardGenerator:
         document.querySelectorAll(`#btn-${{chartId}}-line, #btn-${{chartId}}-bar`).forEach(b => b.classList.remove('active'));
         document.getElementById(`btn-${{chartId}}-${{type}}`).classList.add('active');
 
-        // Line 模式下去掉填充，Bar 模式下启用
+        // Line 模式下去掉填充, Bar 模式下启用
         chart.data.datasets.forEach(ds => {{
             ds.fill = (type === 'bar' && chart.options.scales.x.stacked); 
         }});
@@ -1029,7 +1029,7 @@ class DashboardGenerator:
 
     def run(self):
         """Run the dashboard generation process"""
-        print("📊 Processing data...")
+        print("Processing data...")
         data = self.process_data()
         if data:
             html = self.generate_html(data)
@@ -1041,7 +1041,7 @@ class DashboardGenerator:
                 os.path.join(output_dir, "index.html"), "w", encoding="utf-8"
             ) as f:
                 f.write(html)
-            print(f"✅ Dashboard generated: {output_dir}/index.html")
+            print(f"Dashboard generated: {output_dir}/index.html")
 
 
 if __name__ == "__main__":

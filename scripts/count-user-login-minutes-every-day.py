@@ -65,7 +65,9 @@ def parse_secure_logs():
 
     for log_file in get_secure_logs():
         try:
-            with os.popen(f"sudo cat /var/log/{log_file}") as f:
+            with os.popen(
+                f"sudo cat /var/log/{log_file}", "r", encoding="utf-8", errors="replace"
+            ) as f:
                 for line in f:
                     match = re.search(
                         r"^(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}).*?"  # Timestamp
