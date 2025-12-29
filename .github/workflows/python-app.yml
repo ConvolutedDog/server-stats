@@ -119,10 +119,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository with latest changes
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          ref: "main"
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
@@ -146,7 +147,6 @@ jobs:
       - name: Upload dashboard as artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 上传dashboard目录到GitHub Pages
           path: "./dashboard"
 
       - name: Deploy to GitHub Pages
