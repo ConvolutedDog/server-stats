@@ -9,6 +9,7 @@ SSH Audit Dashboard Generator
 import pandas as pd
 import json
 import os
+import datetime
 
 
 class DashboardGenerator:
@@ -194,6 +195,9 @@ class DashboardGenerator:
     def generate_html(self, data):
         """Generate HTML dashboard with processed data"""
 
+        # Get current time
+        generation_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         # Generate month selector options
         months_options = ""
         for month in data["months_list"]:
@@ -213,7 +217,7 @@ class DashboardGenerator:
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <style>
         :root {{
             /* 默认白色主题 */
@@ -503,7 +507,7 @@ class DashboardGenerator:
             align-items: center; 
             gap: 8px; 
         }}
-        
+
         /* 月份选择器样式 */
         .month-selector-group {{
             display: flex; 
@@ -547,7 +551,7 @@ class DashboardGenerator:
             opacity: 0.9; 
             transform: translateY(-1px);
         }}
-        
+
         /* 按钮组 */
         .chart-controls {{ 
             display: flex; 
@@ -580,7 +584,7 @@ class DashboardGenerator:
             color: white; 
             border-color: var(--accent);
         }}
-        
+
         /* 特殊按钮颜色 */
         .btn-check:hover {{ 
             color: var(--success) !important; 
@@ -700,6 +704,81 @@ class DashboardGenerator:
             }}
         }}
 
+        /* 底部区域样式 */
+        .footer-section {{
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }}
+
+        .footer-content {{
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }}
+
+        .github-footer-link {{
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 20px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            text-decoration: none;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+        }}
+
+        .github-footer-link:hover {{
+            background: #24292e;
+            color: white;
+            border-color: #24292e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(36, 41, 46, 0.3);
+        }}
+
+        .github-footer-link i {{
+            font-size: 18px;
+        }}
+
+        .footer-info {{
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }}
+
+        .footer-text {{
+            color: var(--text-muted);
+            font-size: 13px;
+            opacity: 0.8;
+        }}
+
+        .footer-separator {{
+            color: var(--border);
+            opacity: 0.5;
+        }}
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {{
+            .footer-info {{
+                flex-direction: column;
+                gap: 8px;
+            }}
+            
+            .footer-separator {{
+                display: none;
+            }}
+        }}
     </style>
 </head>
 <body>
@@ -831,7 +910,7 @@ class DashboardGenerator:
             <canvas id="monthlyChart"></canvas>
         </div>
     </div>
-    
+
     <div class="chart-container">
         <div class="chart-header">
             <h2><i class="fas fa-calendar-day"></i> 每日登录详情（小时/日）</h2>
@@ -876,12 +955,29 @@ class DashboardGenerator:
 
 </div>
 
+<!-- 底部GitHub链接 -->
+<div class="footer-section">
+    <div class="footer-content">
+        <a href="https://github.com/ConvolutedDog/server-stats" 
+           target="_blank" 
+           class="github-footer-link">
+            <i class="fab fa-github"></i>
+            <span>查看源码</span>
+        </a>
+        <div class="footer-info">
+            <span class="footer-text">SSH Login Dashboard</span>
+            <span class="footer-separator">|</span>
+            <span class="footer-text">数据更新于: {generation_time}</span>
+        </div>
+    </div>
+</div>
+
 <script>
     // --- 主题切换功能 ---
     function toggleTheme() {{
         const body = document.body;
         const isDark = body.classList.contains('theme-dark');
-        
+
         if (isDark) {{
             body.classList.remove('theme-dark');
             localStorage.setItem('dashboard-theme', 'light');
@@ -889,7 +985,7 @@ class DashboardGenerator:
             body.classList.add('theme-dark');
             localStorage.setItem('dashboard-theme', 'dark');
         }}
-        
+
         // 更新图表主题
         updateChartThemes(!isDark);
     }}
@@ -898,10 +994,10 @@ class DashboardGenerator:
     function initTheme() {{
         const savedTheme = localStorage.getItem('dashboard-theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
+
         // 默认使用白色主题
         const theme = savedTheme || 'light';
-        
+
         if (theme === 'dark') {{
             document.body.classList.add('theme-dark');
         }} else {{
@@ -914,10 +1010,10 @@ class DashboardGenerator:
         // 更新 Chart.js 全局颜色
         Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
         Chart.defaults.borderColor = isDark ? '#334155' : '#e2e8f0';
-        
+
         // 更新网格线颜色
         const gridColor = isDark ? '#334155' : '#e2e8f0';
-        
+
         // 更新所有图表
         Object.values(charts).forEach(chart => {{
             if (chart.options.scales) {{
@@ -930,7 +1026,7 @@ class DashboardGenerator:
             }}
             chart.update();
         }});
-        
+
         // 更新饼图
         if (monthlyPieChart) {{
             monthlyPieChart.update();
@@ -944,16 +1040,16 @@ class DashboardGenerator:
     const rawData = {json.dumps(data)};
     const userColors = rawData.user_colors;
     const monthlyPieData = rawData.pie_monthly_raw;
-    
+
     // --- 全局数据存储 ---
     let allMonthlyData = rawData.monthly_all;
     let allDailyData = rawData.daily_all;
-    
+
     // --- 初始化月份选择器 ---
     function initMonthSelectors() {{
         const months = rawData.months_list;
         const days = rawData.daily_labels;
-        
+
         if (months.length > 0) {{
             // 设置月度图表: 默认显示最近6个月
             const monthlyStartIdx = Math.max(0, months.length - 6);
@@ -976,13 +1072,13 @@ class DashboardGenerator:
     Chart.defaults.color = '#64748b';
     Chart.defaults.borderColor = '#e2e8f0';
     Chart.defaults.font.family = "'Segoe UI', 'Helvetica', 'Arial', sans-serif";
-    
+
     // 通用配置生成器（修改缩放灵敏度）
     function getCommonOptions(isPie = false) {{
         const isDark = document.body.classList.contains('theme-dark');
         const gridColor = isDark ? '#334155' : '#e2e8f0';
         const textColor = isDark ? '#cbd5e1' : '#475569';
-        
+
         const opts = {{
             responsive: true,
             maintainAspectRatio: false,
@@ -1021,7 +1117,7 @@ class DashboardGenerator:
                 }}
             }}
         }};
-        
+
         if (!isPie) {{
             opts.interaction = {{ mode: 'index', intersect: false }};
             opts.scales = {{
@@ -1054,9 +1150,9 @@ class DashboardGenerator:
         const allData = dataType === 'monthly' ? allMonthlyData : allDailyData;
         const labels = allData.labels;
         const datasets = allData.datasets;
-        
+
         if (!labels || labels.length === 0) return {{ labels: [], datasets: [] }};
-        
+
         // 如果是月数据，直接过滤月份
         if (dataType === 'monthly') {{
             const startIdx = labels.indexOf(startMonth);
@@ -1104,27 +1200,27 @@ class DashboardGenerator:
         const allData = allDailyData;
         const labels = allData.labels;
         const datasets = allData.datasets;
-        
+
         if (!labels || labels.length === 0) return {{ labels: [], datasets: [] }};
-        
+
         const startIdx = labels.indexOf(startDate);
         const endIdx = labels.indexOf(endDate);
-        
+
         if (startIdx === -1 || endIdx === -1) return allData;
-        
+
         const filteredLabels = labels.slice(startIdx, endIdx + 1);
         const filteredDatasets = datasets.map(ds => ({{
             ...ds,
             data: ds.data.slice(startIdx, endIdx + 1)
         }}));
-        
+
         return {{ labels: filteredLabels, datasets: filteredDatasets }};
     }}
 
     // --- 初始化趋势图 ---
     function initTrendChart(id, dataType, chartType) {{
         const ctx = document.getElementById(id).getContext('2d');
-        
+
         // 获取初始过滤数据
         let filteredData;
         if (id === 'monthlyChart') {{
@@ -1136,7 +1232,7 @@ class DashboardGenerator:
             const endDate = document.getElementById('dailyEndDate').value;
             filteredData = filterDataByDateRange(startDate, endDate);
         }}
-        
+
         charts[id] = new Chart(ctx, {{
             type: chartType,
             data: filteredData,
@@ -1173,7 +1269,7 @@ class DashboardGenerator:
                         const value = context.parsed || 0;
                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
                         const percentage = Math.round((value / total) * 100 * 10) / 10;
-                        return `${{label}}: ${{value.toFixed(1)}}h (${{percentage}}%)`;
+                        return `${{value.toFixed(1)}}h (${{percentage}}%)`;
                     }}
                 }}
             }}
@@ -1183,17 +1279,17 @@ class DashboardGenerator:
 
     // --- 初始化饼图 (月度 - 动态) ---
     let monthlyPieChart = null;
-    
+
     function updateMonthlyPie() {{
         const selector = document.getElementById('monthSelector');
         const selectedMonth = selector.value;
         const currentData = monthlyPieData[selectedMonth];
-        
+
         if (!currentData) {{
             console.warn(`No data for month: ${{selectedMonth}}`);
             return;
         }}
-        
+
         const currentColors = currentData.labels.map(user => userColors[user] || '#ccc');
 
         const chartData = {{
@@ -1225,7 +1321,7 @@ class DashboardGenerator:
                                     const value = context.parsed || 0;
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                     const percentage = Math.round((value / total) * 100 * 10) / 10;
-                                    return `${{label}}: ${{value.toFixed(1)}}h (${{percentage}}%)`;
+                                    return `${{value.toFixed(1)}}h (${{percentage}}%)`;
                                 }}
                             }}
                         }}
@@ -1234,7 +1330,7 @@ class DashboardGenerator:
             }});
         }}
     }}
-    
+
     // 初始化运行一次
     updateMonthlyPie();
 
@@ -1243,13 +1339,13 @@ class DashboardGenerator:
         const chartId = 'monthlyChart';
         const startMonth = document.getElementById(`${{chartType}}StartMonth`).value;
         const endMonth = document.getElementById(`${{chartType}}EndMonth`).value;
-        
+
         const chart = charts[chartId];
         const filteredData = filterDataByMonthRange(chartType, startMonth, endMonth);
-        
+
         chart.data = filteredData;
         chart.update();
-        
+
         // 重置缩放
         resetZoom(chartId);
     }};
@@ -1259,13 +1355,13 @@ class DashboardGenerator:
         const chartId = 'dailyChart';
         const startDate = document.getElementById('dailyStartDate').value;
         const endDate = document.getElementById('dailyEndDate').value;
-        
+
         const chart = charts[chartId];
         const filteredData = filterDataByDateRange(startDate, endDate);
-        
+
         chart.data = filteredData;
         chart.update();
-        
+
         // 重置缩放
         resetZoom(chartId);
     }};
@@ -1284,7 +1380,7 @@ class DashboardGenerator:
     window.changeType = function(chartId, type) {{
         const chart = charts[chartId];
         chart.config.type = type;
-        
+
         // 样式切换逻辑
         document.querySelectorAll(`#btn-${{chartId}}-line, #btn-${{chartId}}-bar`).forEach(b => b.classList.remove('active'));
         document.getElementById(`btn-${{chartId}}-${{type}}`).classList.add('active');
@@ -1293,7 +1389,7 @@ class DashboardGenerator:
         chart.data.datasets.forEach(ds => {{
             ds.fill = (type === 'bar' && chart.options.scales.x.stacked); 
         }});
-        
+
         chart.update();
     }};
 
@@ -1303,7 +1399,7 @@ class DashboardGenerator:
         const btn = document.getElementById(`btn-${{chartId}}-stack`);
         btn.classList.toggle('active');
         const isStacked = btn.classList.contains('active');
-        
+
         chart.options.scales.x.stacked = isStacked;
         chart.options.scales.y.stacked = isStacked;
         chart.update();
@@ -1312,11 +1408,11 @@ class DashboardGenerator:
     // C. 全选 / 全不选
     window.toggleAll = function(chartId, visible) {{
         const chart = charts[chartId];
-        
+
         chart.data.datasets.forEach((ds, index) => {{
             chart.setDatasetVisibility(index, visible);
         }});
-        
+
         chart.update();
     }};
 
