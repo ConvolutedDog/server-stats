@@ -9,8 +9,6 @@ SSH Audit Dashboard Generator
 import pandas as pd
 import json
 import os
-from collections import defaultdict
-from datetime import datetime
 
 
 class DashboardGenerator:
@@ -195,7 +193,25 @@ class DashboardGenerator:
     
     <style>
         :root {{
-            --bg-dark: #0f172a;
+            /* 默认白色主题 */
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --accent-light: #60a5fa;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --hover-bg: #f1f5f9;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --grid-color: #e2e8f0;
+            --chart-bg: #f8fafc;
+        }}
+
+        .theme-dark {{
+            --bg-color: #0f172a;
             --card-bg: #1e293b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -205,18 +221,70 @@ class DashboardGenerator:
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --hover-bg: #0f172a;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --grid-color: #334155;
+            --chart-bg: #0f172a;
         }}
 
         body {{
-            background-color: var(--bg-dark);
+            background-color: var(--bg-color);
             color: var(--text-main);
             font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0; padding: 20px;
+            margin: 0; 
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
         }}
 
         .container {{ 
             max-width: 1400px; 
             margin: 0 auto; 
+        }}
+
+        /* 主题切换按钮 */
+        .theme-switcher {{
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }}
+
+        .theme-toggle {{
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-main);
+            box-shadow: 0 2px 10px var(--shadow);
+            transition: all 0.3s ease;
+        }}
+
+        .theme-toggle:hover {{
+            transform: rotate(30deg);
+            box-shadow: 0 4px 15px var(--shadow);
+        }}
+
+        .theme-toggle .fa-sun {{
+            display: none;
+        }}
+
+        .theme-dark .theme-toggle .fa-sun {{
+            display: block;
+            color: #f59e0b;
+        }}
+
+        .theme-dark .theme-toggle .fa-moon {{
+            display: none;
+        }}
+
+        .theme-toggle .fa-moon {{
+            color: #475569;
         }}
 
         /* 标题区域样式 */
@@ -278,19 +346,19 @@ class DashboardGenerator:
             display: flex;
             align-items: center;
             gap: 12px;
-            background: rgba(30, 41, 59, 0.7);
+            background: var(--card-bg);
             padding: 12px 18px;
             border-radius: 12px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
+            border: 1px solid var(--border);
             min-width: 180px;
             transition: all 0.3s ease;
         }}
 
         .info-card:hover {{
-            background: rgba(30, 41, 59, 0.9);
-            border-color: rgba(59, 130, 246, 0.4);
+            background: var(--hover-bg);
+            border-color: var(--accent);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px var(--shadow);
         }}
 
         .info-icon {{
@@ -350,6 +418,212 @@ class DashboardGenerator:
                 transparent 100%);
         }}
 
+        /* 顶部统计卡片 */
+        .stats-row {{
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; 
+            margin-bottom: 25px;
+        }}
+        .stat-card {{
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 12px;
+            border: 1px solid var(--border); 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+            transition: all 0.3s ease;
+        }}
+        .stat-card:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px var(--shadow);
+        }}
+        .stat-icon {{
+            width: 45px; 
+            height: 45px; 
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 20px; 
+            color: var(--accent);
+        }}
+
+        /* 图表容器通用样式 */
+        .chart-container {{
+            background: var(--card-bg); 
+            border-radius: 16px; 
+            padding: 20px;
+            margin-bottom: 25px; 
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px var(--shadow);
+            transition: all 0.3s ease;
+        }}
+        .chart-container:hover {{
+            box-shadow: 0 8px 20px var(--shadow);
+        }}
+        .chart-header {{
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 15px; 
+            flex-wrap: wrap; 
+            gap: 10px;
+        }}
+        .chart-header h2 {{ 
+            margin: 0; 
+            font-size: 16px; 
+            color: var(--text-main); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }}
+        
+        /* 月份选择器样式 */
+        .month-selector-group {{
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: var(--bg-color);
+            padding: 4px; 
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }}
+        .month-selector-group select, .month-selector-group input {{
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            color: var(--text-main);
+            padding: 5px 10px; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            outline: none;
+            transition: all 0.2s;
+        }}
+        .month-selector-group select:focus, .month-selector-group input:focus {{
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }}
+        .month-selector-group .month-label {{
+            font-size: 11px; 
+            color: var(--text-muted); 
+            white-space: nowrap;
+        }}
+        .apply-btn {{
+            background: var(--accent); 
+            color: white; 
+            border: none; 
+            padding: 5px 10px;
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            transition: all 0.2s;
+        }}
+        .apply-btn:hover {{ 
+            opacity: 0.9; 
+            transform: translateY(-1px);
+        }}
+        
+        /* 按钮组 */
+        .chart-controls {{ 
+            display: flex; 
+            gap: 5px; 
+            background: var(--bg-color); 
+            padding: 4px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border);
+        }}
+        .chart-controls button, .chart-controls select {{
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            color: var(--text-muted);
+            padding: 5px 10px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px;
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            transition: all 0.2s;
+        }}
+        .chart-controls button:hover {{ 
+            color: var(--text-main); 
+            background: var(--hover-bg); 
+            border-color: var(--accent);
+        }}
+        .chart-controls button.active {{ 
+            background: var(--accent); 
+            color: white; 
+            border-color: var(--accent);
+        }}
+        
+        /* 特殊按钮颜色 */
+        .btn-check:hover {{ 
+            color: var(--success) !important; 
+        }}
+        .btn-trash:hover {{ 
+            color: var(--danger) !important; 
+        }}
+        .btn-reset {{ 
+            color: var(--warning) !important; 
+        }}
+        .btn-reset:hover {{ 
+            color: #f59e0b !important; 
+        }}
+
+        /* 下拉框样式 */
+        select.custom-select {{
+            background: var(--card-bg); 
+            color: var(--text-main); 
+            border: 1px solid var(--border);
+            padding: 5px 10px; 
+            border-radius: 6px; 
+            outline: none;
+            transition: all 0.2s;
+        }}
+        select.custom-select:focus {{
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }}
+
+        /* 饼图区域布局 */
+        .pie-grid {{
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 25px; 
+            margin-bottom: 25px;
+        }}
+        @media (max-width: 768px) {{ 
+            .pie-grid {{ 
+                grid-template-columns: 1fr; 
+            }} 
+        }}
+
+        canvas {{ 
+            width: 100% !important; 
+        }}
+        .chart-canvas-wrapper {{ 
+            position: relative; 
+            height: 350px; 
+            width: 100%; 
+            background: var(--chart-bg);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid var(--border);
+        }}
+        .pie-canvas-wrapper {{ 
+            position: relative; 
+            height: 300px; 
+            width: 100%; 
+            display: flex; 
+            justify-content: center;
+            background: var(--chart-bg);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid var(--border);
+        }}
+
         /* 响应式调整 */
         @media (max-width: 768px) {{
             .header-main {{
@@ -374,6 +648,15 @@ class DashboardGenerator:
                 min-width: 160px;
                 flex: 1;
             }}
+
+            .theme-switcher {{
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: flex-end;
+            }}
         }}
 
         @media (max-width: 480px) {{
@@ -386,188 +669,25 @@ class DashboardGenerator:
                 width: 100%;
                 justify-content: center;
             }}
-        }}
-
-        /* 顶部统计卡片 */
-        .stats-row {{
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px; 
-            margin-bottom: 25px;
-        }}
-        .stat-card {{
-            background: var(--card-bg); 
-            padding: 20px; 
-            border-radius: 12px;
-            border: 1px solid var(--border); 
-            display: flex; 
-            align-items: center; 
-            gap: 15px;
-        }}
-        .stat-icon {{
-            width: 45px; 
-            height: 45px; 
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 10px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            font-size: 20px; 
-            color: var(--accent);
-        }}
-
-        /* 图表容器通用样式 */
-        .chart-container {{
-            background: var(--card-bg); 
-            border-radius: 16px; 
-            padding: 20px;
-            margin-bottom: 25px; 
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }}
-        .chart-header {{
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            margin-bottom: 15px; 
-            flex-wrap: wrap; 
-            gap: 10px;
-        }}
-        .chart-header h2 {{ 
-            margin: 0; 
-            font-size: 16px; 
-            color: var(--text-main); 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-        }}
-        
-        /* 月份选择器样式 */
-        .month-selector-group {{
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            background: #0f172a;
-            padding: 4px; 
-            border-radius: 8px;
-        }}
-        .month-selector-group select, .month-selector-group input {{
-            background: transparent; 
-            border: 1px solid var(--border); 
-            color: var(--text-main);
-            padding: 5px 10px; 
-            border-radius: 6px; 
-            font-size: 12px; 
-            outline: none;
-        }}
-        .month-selector-group select:focus, .month-selector-group input:focus {{
-            border-color: var(--accent);
-        }}
-        .month-selector-group .month-label {{
-            font-size: 11px; 
-            color: var(--text-muted); 
-            white-space: nowrap;
-        }}
-        .apply-btn {{
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            padding: 5px 10px;
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 11px; 
-            transition: opacity 0.2s;
-        }}
-        .apply-btn:hover {{ 
-            opacity: 0.9; 
-        }}
-        
-        /* 按钮组 */
-        .chart-controls {{ 
-            display: flex; 
-            gap: 5px; 
-            background: #0f172a; 
-            padding: 4px; 
-            border-radius: 8px; 
-        }}
-        .chart-controls button, .chart-controls select {{
-            background: transparent; 
-            border: none; 
-            color: var(--text-muted);
-            padding: 5px 10px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 12px;
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-            transition: all 0.2s;
-        }}
-        .chart-controls button:hover {{ 
-            color: var(--text-main); 
-            background: rgba(255,255,255,0.05); 
-        }}
-        .chart-controls button.active {{ 
-            background: var(--accent); 
-            color: white; 
-        }}
-        
-        /* 特殊按钮颜色 */
-        .btn-check:hover {{ 
-            color: var(--success) !important; 
-        }}
-        .btn-trash:hover {{ 
-            color: var(--danger) !important; 
-        }}
-        .btn-reset {{ 
-            color: var(--warning) !important; 
-        }}
-        .btn-reset:hover {{ 
-            color: #fbbf24 !important; 
-        }}
-
-        /* 下拉框样式 */
-        select.custom-select {{
-            background: #0f172a; 
-            color: var(--text-main); 
-            border: 1px solid var(--border);
-            padding: 5px 10px; 
-            border-radius: 6px; 
-            outline: none;
-        }}
-
-        /* 饼图区域布局 */
-        .pie-grid {{
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 25px; 
-            margin-bottom: 25px;
-        }}
-        @media (max-width: 768px) {{ 
-            .pie-grid {{ 
-                grid-template-columns: 1fr; 
-            }} 
-        }}
-
-        canvas {{ 
-            width: 100% !important; 
-        }}
-        .chart-canvas-wrapper {{ 
-            position: relative; 
-            height: 350px; 
-            width: 100%; 
-        }}
-        .pie-canvas-wrapper {{ 
-            position: relative; 
-            height: 300px; 
-            width: 100%; 
-            display: flex; 
-            justify-content: center; 
+            
+            .theme-toggle {{
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }}
         }}
 
     </style>
 </head>
 <body>
+
+<!-- 主题切换按钮 -->
+<div class="theme-switcher">
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon"></i>
+        <i class="fas fa-sun"></i>
+    </div>
+</div>
 
 <div class="container">
     <!-- 标题区域 -->
@@ -734,6 +854,69 @@ class DashboardGenerator:
 </div>
 
 <script>
+    // --- 主题切换功能 ---
+    function toggleTheme() {{
+        const body = document.body;
+        const isDark = body.classList.contains('theme-dark');
+        
+        if (isDark) {{
+            body.classList.remove('theme-dark');
+            localStorage.setItem('dashboard-theme', 'light');
+        }} else {{
+            body.classList.add('theme-dark');
+            localStorage.setItem('dashboard-theme', 'dark');
+        }}
+        
+        // 更新图表主题
+        updateChartThemes(!isDark);
+    }}
+
+    // 初始化主题
+    function initTheme() {{
+        const savedTheme = localStorage.getItem('dashboard-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // 默认使用白色主题
+        const theme = savedTheme || 'light';
+        
+        if (theme === 'dark') {{
+            document.body.classList.add('theme-dark');
+        }} else {{
+            document.body.classList.remove('theme-dark');
+        }}
+    }}
+
+    // 更新图表主题颜色
+    function updateChartThemes(isDark) {{
+        // 更新 Chart.js 全局颜色
+        Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+        Chart.defaults.borderColor = isDark ? '#334155' : '#e2e8f0';
+        
+        // 更新网格线颜色
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+        
+        // 更新所有图表
+        Object.values(charts).forEach(chart => {{
+            if (chart.options.scales) {{
+                if (chart.options.scales.x) {{
+                    chart.options.scales.x.grid = {{ color: gridColor }};
+                }}
+                if (chart.options.scales.y) {{
+                    chart.options.scales.y.grid = {{ color: gridColor }};
+                }}
+            }}
+            chart.update();
+        }});
+        
+        // 更新饼图
+        if (monthlyPieChart) {{
+            monthlyPieChart.update();
+        }}
+    }}
+
+    // 页面加载时初始化主题
+    document.addEventListener('DOMContentLoaded', initTheme);
+
     // --- 数据注入 ---
     const rawData = {json.dumps(data)};
     const userColors = rawData.user_colors;
@@ -763,19 +946,30 @@ class DashboardGenerator:
     }}
 
     // --- Chart.js 全局配置 ---
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.borderColor = '#334155';
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.borderColor = '#e2e8f0';
     Chart.defaults.font.family = "'Segoe UI', 'Helvetica', 'Arial', sans-serif";
     
     // 通用配置生成器（修改缩放灵敏度）
     function getCommonOptions(isPie = false) {{
+        const isDark = document.body.classList.contains('theme-dark');
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+        const textColor = isDark ? '#cbd5e1' : '#475569';
+        
         const opts = {{
             responsive: true,
             maintainAspectRatio: false,
             plugins: {{
                 legend: {{ 
                     position: isPie ? 'right' : 'bottom', 
-                    labels: {{ boxWidth: 12, padding: 15, color: '#cbd5e1' }}
+                    labels: {{ 
+                        boxWidth: 12, 
+                        padding: 15, 
+                        color: textColor,
+                        font: {{
+                            size: 11
+                        }}
+                    }}
                 }},
                 // 调整缩放插件配置，降低灵敏度
                 zoom: {{
@@ -805,15 +999,19 @@ class DashboardGenerator:
             opts.interaction = {{ mode: 'index', intersect: false }};
             opts.scales = {{
                 x: {{ 
-                    grid: {{ display: false }},
+                    grid: {{ color: gridColor }},
                     ticks: {{
                         maxRotation: 45,
-                        minRotation: 45
+                        minRotation: 45,
+                        color: textColor
                     }}
                 }},
                 y: {{ 
                     border: {{ display: false }}, 
-                    grid: {{ color: '#334155' }},
+                    grid: {{ color: gridColor }},
+                    ticks: {{
+                        color: textColor
+                    }},
                     beginAtZero: true
                 }}
             }};
