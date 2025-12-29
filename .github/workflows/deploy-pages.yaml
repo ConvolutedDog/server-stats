@@ -1,16 +1,21 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy Static Content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
+  # Trigger the workflow after the data update workflow completes
+  workflow_run:
+    workflows: ["Daily Server Stats Update"]
+    types:
+      - completed
+
+  # Support manual trigger from the Actions tab
+  workflow_dispatch:
+
+  # Trigger on pushes to the main branch for dashboard changes
   push:
     branches: ["main"]
-    # Only run for changes to the dashboard directory
     paths:
       - "dashboard/**"
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -18,30 +23,33 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Ensure only one deployment runs at a time
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
+    # Only run if the triggering workflow was successful, or if triggered by push/manual
+    if: >
+      github.event_name != 'workflow_run' || 
+      github.event.workflow_run.conclusion == 'success'
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact
+      - name: Upload dashboard as artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # index.html is in the dashboard directory
+          # The path where your index.html and generated data reside
           path: "./dashboard"
 
       - name: Deploy to GitHub Pages
