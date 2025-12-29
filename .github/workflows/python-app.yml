@@ -58,6 +58,8 @@ jobs:
       - name: Copy files to server
         run: |
           rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
             ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/
 
       - name: Execute script on server
@@ -73,6 +75,9 @@ jobs:
             ./
           rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" \
             ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/README.md \
+            ./
+          rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/dashboard/index.html \
             ./
           ssh -p ${{ secrets.SSH_PORT || '22' }} \
             ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} \
