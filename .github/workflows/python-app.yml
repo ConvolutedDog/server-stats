@@ -78,7 +78,7 @@ jobs:
             ./
           rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" \
             ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }}:/tmp/server-stats/dashboard/index.html \
-            ./
+            ./dashboard/index.html
           ssh -p ${{ secrets.SSH_PORT || '22' }} \
             ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} \
             "rm -rf /tmp/server-stats"
@@ -92,7 +92,7 @@ jobs:
           git config --global user.name "$GIT_PUSH_USER_NAME"
           git config --global user.email "$GIT_PUSH_USER_EMAIL"
           git status
-          git add ./ssh_login_minutes.csv ./README.md ./dashboard
+          git add ./ssh_login_minutes.csv ./README.md ./dashboard/index.html
 
           # Check if there are changes to commit
           if git diff --quiet && git diff --staged --quiet; then
