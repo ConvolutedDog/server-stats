@@ -14,9 +14,20 @@ import os
 class DashboardGenerator:
     """SSH Audit Dashboard Generator"""
 
-    def __init__(self, csv_path):
+    def __init__(self, csv_path, user_mapping_path=None):
         """Initialize generator with CSV file path"""
         self.csv_path = csv_path
+        self.user_mapping_path = user_mapping_path
+        self.user_mapping = {}
+
+        # Load user mapping if provided
+        if user_mapping_path and os.path.exists(user_mapping_path):
+            try:
+                with open(user_mapping_path, "r", encoding="utf-8") as f:
+                    self.user_mapping = json.load(f)
+                print(f"Loaded user mapping from {user_mapping_path}")
+            except Exception as e:
+                print(f"Failed to load user mapping: {e}")
 
     def process_data(self):
         """Process CSV data and prepare for visualization"""
@@ -28,6 +39,16 @@ class DashboardGenerator:
 
             # Extract user names (all columns except date)
             users = [col for col in df.columns if col != "date"]
+
+            # Apply user mapping
+            def map_username(username):
+                return self.user_mapping.get(username, username)
+
+            # Map usernames
+            mapped_users = [map_username(user) for user in users]
+            column_mapping = dict(zip(users, mapped_users))
+            df = df.rename(columns=column_mapping)
+            users = mapped_users
 
             # Convert minutes to hours and clean data
             for user in users:
@@ -50,7 +71,7 @@ class DashboardGenerator:
             pie_total_labels = total_sums.index.tolist()
             pie_total_data = total_sums.values.tolist()
             total_hours = total_sums.sum()
-            pie_total_percent = [(v/total_hours*100) for v in pie_total_data]
+            pie_total_percent = [(v / total_hours * 100) for v in pie_total_data]
 
             # B. Monthly distribution (split by month)
             # Structure: {"2025-04": {"labels": [u1, u2], "data": [100, 20]}, ...}
@@ -67,7 +88,7 @@ class DashboardGenerator:
                 monthly_pie_data[month] = {
                     "labels": valid_data.index.tolist(),
                     "data": valid_data.values.tolist(),
-                    "percent": [(v/month_total*100) for v in valid_data.values],
+                    "percent": [(v / month_total * 100) for v in valid_data.values],
                 }
 
             # --- 3. Generate Color Configuration ---
@@ -141,6 +162,7 @@ class DashboardGenerator:
                 "pie_monthly_raw": monthly_pie_data,  # Raw dictionary for frontend processing
                 "user_colors": user_color_map,  # Color mapping passed to frontend
                 "months_list": available_months,  # For dropdown generation
+                "daily_labels": daily_labels,  # 新增：所有日期标签
                 "stats": {
                     "total_hours": f"{df[users].sum().sum():,.1f}",
                     "user_count": len(users),
@@ -177,13 +199,10 @@ class DashboardGenerator:
         for month in data["months_list"]:
             months_options += f'<option value="{month}">{month}</option>'
 
-        # Generate year selector options
-        years = sorted(
-            set([m.split("-")[0] for m in data["months_list"]]), reverse=True
-        )
-        years_options = ""
-        for year in years:
-            years_options += f'<option value="{year}">{year}</option>'
+        # Generate day selector options (for daily chart)
+        daily_options = ""
+        for day in data["daily_labels"]:
+            daily_options += f'<option value="{day}">{day}</option>'
 
         html_content = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -819,14 +838,14 @@ class DashboardGenerator:
             <div style="display: flex; gap: 10px;">
                 <div class="month-selector-group">
                     <span class="month-label">从:</span>
-                    <select id="dailyStartMonth" style="min-width: 80px;">
-                        {months_options}
+                    <select id="dailyStartDate" style="min-width: 100px;">
+                        {daily_options}
                     </select>
                     <span class="month-label">到:</span>
-                    <select id="dailyEndMonth" style="min-width: 80px;">
-                        {months_options}
+                    <select id="dailyEndDate" style="min-width: 100px;">
+                        {daily_options}
                     </select>
-                    <button class="apply-btn" onclick="applyMonthRange('daily')">应用</button>
+                    <button class="apply-btn" onclick="applyDateRange()">应用</button>
                 </div>
                 <div class="chart-controls">
                     <button onclick="toggleAll('dailyChart', true)" class="btn-check">
@@ -933,16 +952,20 @@ class DashboardGenerator:
     // --- 初始化月份选择器 ---
     function initMonthSelectors() {{
         const months = rawData.months_list;
+        const days = rawData.daily_labels;
+        
         if (months.length > 0) {{
             // 设置月度图表: 默认显示最近6个月
             const monthlyStartIdx = Math.max(0, months.length - 6);
             document.getElementById('monthlyStartMonth').value = months[monthlyStartIdx];
             document.getElementById('monthlyEndMonth').value = months[months.length - 1];
             
-            // 设置日度图表: 默认显示最近1个月
-            const dailyStartIdx = Math.max(0, months.length - 1);
-            document.getElementById('dailyStartMonth').value = months[dailyStartIdx];
-            document.getElementById('dailyEndMonth').value = months[months.length - 1];
+            // 设置日度图表: 默认显示最近30天
+            if (days.length > 0) {{
+                const dailyStartIdx = Math.max(0, days.length - 30);
+                document.getElementById('dailyStartDate').value = days[dailyStartIdx];
+                document.getElementById('dailyEndDate').value = days[days.length - 1];
+            }}
             
             // 初始化月度饼图选择器为最后一个月
             document.getElementById('monthSelector').value = months[months.length - 1];
@@ -1076,16 +1099,43 @@ class DashboardGenerator:
         }}
     }}
 
+    // --- 根据日期范围过滤数据 ---
+    function filterDataByDateRange(startDate, endDate) {{
+        const allData = allDailyData;
+        const labels = allData.labels;
+        const datasets = allData.datasets;
+        
+        if (!labels || labels.length === 0) return {{ labels: [], datasets: [] }};
+        
+        const startIdx = labels.indexOf(startDate);
+        const endIdx = labels.indexOf(endDate);
+        
+        if (startIdx === -1 || endIdx === -1) return allData;
+        
+        const filteredLabels = labels.slice(startIdx, endIdx + 1);
+        const filteredDatasets = datasets.map(ds => ({{
+            ...ds,
+            data: ds.data.slice(startIdx, endIdx + 1)
+        }}));
+        
+        return {{ labels: filteredLabels, datasets: filteredDatasets }};
+    }}
+
     // --- 初始化趋势图 ---
     function initTrendChart(id, dataType, chartType) {{
         const ctx = document.getElementById(id).getContext('2d');
         
-        // 获取初始月份范围
-        const startMonth = document.getElementById(`${{dataType}}StartMonth`).value;
-        const endMonth = document.getElementById(`${{dataType}}EndMonth`).value;
-        
-        // 过滤数据
-        const filteredData = filterDataByMonthRange(dataType, startMonth, endMonth);
+        // 获取初始过滤数据
+        let filteredData;
+        if (id === 'monthlyChart') {{
+            const startMonth = document.getElementById(`${{dataType}}StartMonth`).value;
+            const endMonth = document.getElementById(`${{dataType}}EndMonth`).value;
+            filteredData = filterDataByMonthRange(dataType, startMonth, endMonth);
+        }} else {{
+            const startDate = document.getElementById('dailyStartDate').value;
+            const endDate = document.getElementById('dailyEndDate').value;
+            filteredData = filterDataByDateRange(startDate, endDate);
+        }}
         
         charts[id] = new Chart(ctx, {{
             type: chartType,
@@ -1188,14 +1238,30 @@ class DashboardGenerator:
     // 初始化运行一次
     updateMonthlyPie();
 
-    // --- 应用月份范围 ---
+    // --- 应用月份范围 (月度图表) ---
     window.applyMonthRange = function(chartType) {{
-        const chartId = chartType === 'monthly' ? 'monthlyChart' : 'dailyChart';
+        const chartId = 'monthlyChart';
         const startMonth = document.getElementById(`${{chartType}}StartMonth`).value;
         const endMonth = document.getElementById(`${{chartType}}EndMonth`).value;
         
         const chart = charts[chartId];
         const filteredData = filterDataByMonthRange(chartType, startMonth, endMonth);
+        
+        chart.data = filteredData;
+        chart.update();
+        
+        // 重置缩放
+        resetZoom(chartId);
+    }};
+
+    // --- 应用日期范围 (每日图表) ---
+    window.applyDateRange = function() {{
+        const chartId = 'dailyChart';
+        const startDate = document.getElementById('dailyStartDate').value;
+        const endDate = document.getElementById('dailyEndDate').value;
+        
+        const chart = charts[chartId];
+        const filteredData = filterDataByDateRange(startDate, endDate);
         
         chart.data = filteredData;
         chart.update();
@@ -1280,5 +1346,11 @@ class DashboardGenerator:
 if __name__ == "__main__":
     this_dir = os.path.dirname(os.path.abspath(__file__))
     csv_file = os.path.join(this_dir, "..", "ssh_login_minutes.csv")
+    user_mapping_file = os.path.join(this_dir, "users.json")
 
-    DashboardGenerator(csv_file).run()
+    if os.path.exists(user_mapping_file):
+        DashboardGenerator(csv_file, user_mapping_file).run()
+    else:
+        print(f"User mapping file not found: {user_mapping_file}")
+        print("Using original usernames without mapping")
+        DashboardGenerator(csv_file).run()
