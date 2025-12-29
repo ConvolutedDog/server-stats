@@ -1,4 +1,4 @@
-name: Daily Server Stats Update
+name: Server Stats Update and Deploy
 
 on:
   workflow_dispatch:
@@ -13,11 +13,20 @@ on:
     - cron: "0 16 * * *"
 
 permissions:
-  contents: write # Needed to commit changes back to the repo
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   update-stats:
     runs-on: ubuntu-latest
+
+    outputs:
+      stats_updated: ${{ steps.commit.outputs.stats_changed }}
 
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +78,8 @@ jobs:
             ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} \
             "rm -rf /tmp/server-stats"
 
-      - name: Commit and push changes
+      - name: Check for changes and commit
+        id: commit
         env:
           GIT_PUSH_USER_NAME: ${{ secrets.GIT_PUSH_USER_NAME }}
           GIT_PUSH_USER_EMAIL: ${{ secrets.GIT_PUSH_USER_EMAIL }}
@@ -77,5 +87,62 @@ jobs:
           git config --global user.name "$GIT_PUSH_USER_NAME"
           git config --global user.email "$GIT_PUSH_USER_EMAIL"
           git add ./ssh_login_minutes.csv ./README.md ./dashboard
-          git diff --quiet && git diff --staged --quiet || \
-            (git commit -m "[Bot] Update login time at $(TZ=Asia/Shanghai date '+%H:%M UTC+8')" && git push)
+
+          # Check if there are changes to commit
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "stats_changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected, committing..."
+            git commit -m "[Bot] Update login time at $(TZ=Asia/Shanghai date '+%H:%M UTC+8')"
+            git push
+            echo "stats_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: update-stats
+    if: |
+      (needs.update-stats.result == 'success' && needs.update-stats.outputs.stats_updated == 'true') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Verify dashboard files exist
+        run: |
+          echo "Checking dashboard files..."
+          if [ -d "./dashboard" ]; then
+            echo "Dashboard directory found"
+            ls -la ./dashboard/
+            if [ -z "$(ls -A ./dashboard/)" ]; then
+              echo "Warning: Dashboard directory is empty"
+              echo "<html><body><h1>Dashboard is being generated...</h1></body></html>" > ./dashboard/index.html
+            fi
+          else
+            echo "Dashboard directory not found, creating with placeholder..."
+            mkdir -p ./dashboard
+            echo "<html><body><h1>Dashboard is being generated...</h1><p>Last update: $(date)</p></body></html>" > ./dashboard/index.html
+          fi
+
+      - name: Upload dashboard as artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 上传dashboard目录到GitHub Pages
+          path: "./dashboard"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
