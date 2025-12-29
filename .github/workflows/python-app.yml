@@ -86,6 +86,7 @@ jobs:
         run: |
           git config --global user.name "$GIT_PUSH_USER_NAME"
           git config --global user.email "$GIT_PUSH_USER_EMAIL"
+          git status
           git add ./ssh_login_minutes.csv ./README.md ./dashboard
 
           # Check if there are changes to commit
