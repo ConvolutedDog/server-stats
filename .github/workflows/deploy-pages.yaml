@@ -14,8 +14,6 @@ on:
   # Trigger on pushes to the main branch for dashboard changes
   push:
     branches: ["main"]
-    paths:
-      - "dashboard/**"
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
