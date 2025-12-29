@@ -70,9 +70,12 @@ jobs:
           "rm -rf /tmp/server-stats"
 
     - name: Commit and push changes
+      env:
+        GIT_PUSH_USER_NAME: ${{ secrets.GIT_PUSH_USER_NAME }}
+        GIT_PUSH_USER_EMAIL: ${{ secrets.GIT_PUSH_USER_EMAIL }}
       run: |
-        git config --global user.name "StatsUpdaterBot"
-        git config --global user.email "41898282+stats-updater[bot]@users.noreply.github.com"
+        git config --global user.name "$GIT_PUSH_USER_NAME"
+        git config --global user.email "$GIT_PUSH_USER_EMAIL"
         git add ./ssh_login_minutes.csv ./README.md
         git diff --quiet && git diff --staged --quiet || \
           (git commit -m "[Bot] Update login time at $(TZ=Asia/Shanghai date '+%H:%M UTC+8')" && git push)
