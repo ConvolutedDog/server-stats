@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, time
 from collections import defaultdict
 from tempfile import NamedTemporaryFile
 import argparse
+import subprocess
 
 
 def get_secure_logs():
@@ -65,24 +66,30 @@ def parse_secure_logs():
 
     for log_file in get_secure_logs():
         try:
-            with os.popen(
-                f"sudo cat /var/log/{log_file}", "r", encoding="utf-8", errors="replace"
-            ) as f:
-                for line in f:
-                    match = re.search(
-                        r"^(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}).*?"  # Timestamp
-                        r"sshd\[(\d+)\]:.*"  # Pid
-                        r"pam_unix\(sshd:session\): session (opened|closed)"  # Event type
-                        r" for user (\w+)",  # Username
-                        line,
-                    )
-                    if match:
-                        timestamp_str, pid, action, username = match.groups()
-                        try:
-                            timestamp = parse_timestamp(timestamp_str, year_override)
-                            sessions[(username, pid)].append((timestamp, action))
-                        except ValueError as e:
-                            sys.stderr.write(f"[WARN] {log_file}: {str(e)}\n")
+            result = subprocess.Popen(
+                ["sudo", "cat", f"/var/log/{log_file}"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+
+            for line in result.stdout:
+                match = re.search(
+                    r"^(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}).*?"  # Timestamp
+                    r"sshd\[(\d+)\]:.*"  # Pid
+                    r"pam_unix\(sshd:session\): session (opened|closed)"  # Event type
+                    r" for user (\w+)",  # Username
+                    line,
+                )
+                if match:
+                    timestamp_str, pid, action, username = match.groups()
+                    try:
+                        timestamp = parse_timestamp(timestamp_str, year_override)
+                        sessions[(username, pid)].append((timestamp, action))
+                    except ValueError as e:
+                        sys.stderr.write(f"[WARN] {log_file}: {str(e)}\n")
         except Exception as e:
             sys.stderr.write(f"[ERROR] Failed to read {log_file}: {str(e)}\n")
 
