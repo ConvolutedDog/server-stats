@@ -197,7 +197,7 @@ jobs:
               } catch (mergeError) {
                 console.error(`Failed to merge: ${mergeError.message}`);
               }
-            } cacth (error) {
+            } catch (error) {
               console.error(`Failed to create PR: ${error.message}`);
             }
 
