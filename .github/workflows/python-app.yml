@@ -113,7 +113,6 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -181,7 +180,7 @@ jobs:
               
               // Output PR number for next step
               core.setOutput('pr_number', pr.number.toString());
-  
+
               console.log(`Attempting to merge PR #${pr.number}...`);
               try {
                 await github.rest.pulls.merge({
