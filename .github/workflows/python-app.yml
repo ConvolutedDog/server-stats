@@ -2,8 +2,6 @@ name: Server Stats Update and Deploy
 
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
   schedule:
     # Intended trigger time: 00:00 Beijing Time (UTC+8).
     #   - Target UTC time: 16:00 (00:00 Beijing - 8 hours).
