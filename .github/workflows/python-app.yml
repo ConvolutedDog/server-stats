@@ -97,6 +97,17 @@ jobs:
             echo "stats_changed=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Upload updated files as artifact
+        if: steps.check-changes.outputs.stats_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: stats-updates
+          path: |
+            ssh_login_minutes.csv
+            README.md
+            dashboard/index.html
+          retention-days: 1
+
   create-pr:
     needs: update-stats
     if: |
@@ -112,6 +123,20 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.ref }}
+
+      - name: Download updated files
+        uses: actions/download-artifact@v4
+        with:
+          name: stats-updates
+          path: ./
+
+      - name: Verify downloaded files
+        run: |
+          echo "Downloaded files:"
+          ls -la ./ssh_login_minutes.csv ./README.md ./dashboard/index.html
+          echo "File contents:"
+          head -5 ./ssh_login_minutes.csv
+          head -10 ./README.md | tail -5
 
       - name: Create new branch
         run: |
