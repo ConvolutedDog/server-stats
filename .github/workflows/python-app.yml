@@ -180,12 +180,11 @@ jobs:
             });
             
             // Output PR number for next step
-            core.setOutput('pr_number', pr.number);
+            core.setOutput('pr_number', pr.number.toString());
 
-      - name: Wait for checks (optional)
+      - name: Set PR number as environment variable
         run: |
-          echo "Waiting 30 seconds for any status checks..."
-          sleep 30
+          echo "PR_NUMBER=${{ steps.create-pull-request.outputs.pr_number }}" >> $GITHUB_ENV
 
       - name: Merge Pull Request
         uses: actions/github-script@v7
@@ -193,26 +192,30 @@ jobs:
           PR_NUMBER: ${{ steps.create-pull-request.outputs.pr_number }}
         with:
           script: |
+            console.log(`PR number from env: ${process.env.PR_NUMBER}`);
+            if (!process.env.PR_NUMBER || process.env.PR_NUMBER === '') {
+              throw new Error('PR_NUMBER is empty or undefined');
+            }
+            
+            const prNumber = parseInt(process.env.PR_NUMBER);
+            console.log(`Attempting to merge PR #${prNumber}...`);
+            
             try {
-              await github.rest.pulls.merge({
+              const result = await github.rest.pulls.merge({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: process.env.PR_NUMBER,
+                pull_number: prNumber,
                 merge_method: 'squash',
-                commit_title: `Merge PR #${process.env.PR_NUMBER}: Update server stats`,
+                commit_title: `Merge PR #${prNumber}: Update server stats`,
                 commit_message: 'Automated merge by GitHub Actions'
               });
-              console.log(`Successfully merged PR #${process.env.PR_NUMBER}`);
+              console.log(`Successfully merged PR #${prNumber}: ${result.message}`);
             } catch (error) {
-              console.log(`Could not merge PR: ${error.message}`);
-              // If merge fails (e.g., due to conflicts), try rebase and merge
-              await github.rest.pulls.merge({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: process.env.PR_NUMBER,
-                merge_method: 'rebase'
-              });
-              console.log(`Merged using rebase method`);
+              console.error(`Error merging PR: ${error.message}`);
+              if (error.status === 404) {
+                console.error('PR not found. This usually means the PR creation failed.');
+              }
+              // Other process logic
             }
 
       - name: Delete branch
