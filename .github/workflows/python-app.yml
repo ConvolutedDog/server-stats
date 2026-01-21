@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      stats_updated: ${{ steps.commit.outputs.stats_changed }}
+      stats_updated: ${{ steps.check-changes.outputs.stats_changed }}
 
     steps:
       - uses: actions/checkout@v4
