@@ -52,6 +52,15 @@ jobs:
             IdentityFile ~/.ssh/id_rsa" > ~/.ssh/config
           ssh-keyscan -p ${{ secrets.SSH_PORT || '22' }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Test SSH Auth
+        run: |
+          ssh -v -p ${{ secrets.SSH_PORT || '22' }} \
+            -i ~/.ssh/id_rsa \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=10 \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SERVER_HOST }} \
+            "echo 'Auth OK'"
+
       - name: Copy files to server
         run: |
           rsync -avz -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" --delete \
